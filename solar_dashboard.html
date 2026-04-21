@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar Utilization Optimizer — VIT</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       TOPBAR — Logo + Controls
+  ═══════════════════════════════════════════ -->
+  <header class="topbar">
+    <div class="top-logo">
+      <div class="sun-ico" id="sunIco">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="5" fill="#fff"/>
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="top-title">Solar Utilization Optimizer</div>
+        <div class="top-sub">Vishwakarma Institute of Technology · Pune · Real-time Dashboard</div>
+      </div>
+    </div>
+
+    <div class="top-right">
+      <button class="hw-btn" id="hwBtn">
+        <span class="pulse pr" id="hwDot"></span>
+        <span id="hwLbl">Connect Arduino</span>
+      </button>
+      <button class="mode-toggle mode-demo" id="modeBtn">
+        <span class="pulse pg" id="modeDot"></span>
+        <span id="modeLbl">Demo mode</span>
+      </button>
+      <div class="conn-pill" id="connPill">No hardware</div>
+      <div class="clock-disp" id="clockDisp">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN GRID — All Dashboard Cards
+  ═══════════════════════════════════════════ -->
+  <main class="grid">
+
+    <!-- Card 1: Solar Voltage -->
+    <div class="card glow-b">
+      <div class="card-lbl blue">Solar panel voltage</div>
+      <div class="s-art" id="sArt"></div>
+      <div class="volt-row">
+        <span class="v-big" id="solarV" style="color:var(--B)">0.00</span>
+        <span class="v-unit">V</span>
+      </div>
+      <div class="v-sub">Open-circuit · Pin A0 (UNO)</div>
+      <div class="vbar-wrap"><div class="vbar" id="sVBar" style="background:var(--B)"></div></div>
+    </div>
+
+    <!-- Card 2: Battery Voltage -->
+    <div class="card glow-g">
+      <div class="card-lbl">Battery voltage (18650)</div>
+      <div class="bat-wrap">
+        <div class="bat-body">
+          <div class="bat-fill" id="batFill"></div>
+          <div class="bat-shine"></div>
+          <div class="bat-tip"></div>
+        </div>
+        <div class="bat-pct" id="batPct" style="color:var(--G)">0%</div>
+      </div>
+      <div class="bat-cells" id="batCells"></div>
+      <div class="volt-row" style="margin-top:6px">
+        <span class="v-big" id="batV" style="color:var(--G)">0.000</span>
+        <span class="v-unit">V</span>
+      </div>
+      <div class="v-sub">Li-ion · Full=4.10V · Low=3.20V · Pin A0</div>
+      <div class="vbar-wrap"><div class="vbar" id="bVBar" style="background:var(--G)"></div></div>
+    </div>
+
+    <!-- Card 3: Secondary Load -->
+    <div class="card glow-o">
+      <div class="card-lbl orange">Secondary load (LED strip)</div>
+      <div class="load-banner load-off" id="loadBanner">
+        <div>
+          <div class="load-lbl">Load status</div>
+          <div class="load-state" id="loadState" style="color:var(--R)">OFF</div>
+          <div class="load-note" id="loadNote">Battery charging — load off</div>
+        </div>
+        <div class="load-dot dot-off" id="loadDot"></div>
+      </div>
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-lbl">Load power</div>
+          <div class="chip-val" id="loadPwr" style="color:var(--O)">0.000 W</div>
+        </div>
+        <div class="chip">
+          <div class="chip-lbl">Relay pin</div>
+          <div class="chip-val" style="color:var(--t2)">D8 (UNO)</div>
+        </div>
+        <div class="chip">
+          <div class="chip-lbl">Relay events</div>
+          <div class="chip-val" id="relCnt" style="color:var(--P)">0</div>
+        </div>
+        <div class="chip">
+          <div class="chip-lbl">Efficiency</div>
+          <div class="chip-val" id="effV" style="color:var(--G)">—%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Boost Voltage -->
+    <div class="card glow-y">
+      <div class="card-lbl yellow">Boost output (MT3608)</div>
+      <div class="volt-row">
+        <span class="v-big" id="boostV" style="color:var(--Y)">0.00</span>
+        <span class="v-unit">V</span>
+      </div>
+      <div class="v-sub">3.7V battery → 5V for Arduino · Estimated</div>
+      <div class="vbar-wrap"><div class="vbar" id="boostVBar" style="background:var(--Y)"></div></div>
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-lbl">Battery input</div>
+          <div class="chip-val" id="boostIn" style="color:var(--O)">0.00 V</div>
+        </div>
+        <div class="chip">
+          <div class="chip-lbl">Target out</div>
+          <div class="chip-val" style="color:var(--Y)">5.00 V</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Hysteresis + ESG -->
+    <div class="card glow-g">
+      <div class="card-lbl">Hysteresis control</div>
+      <div class="hyst-card">
+        <div class="hyst-sub">Relay switching band (3.0V – 4.2V)</div>
+        <div class="hyst-bar">
+          <div class="hyst-fill" id="hFill"></div>
+          <div class="hyst-mk hm-on"  style="left:75%" title="ON at 4.10V"></div>
+          <div class="hyst-mk hm-off" style="left:60%" title="OFF at 3.80V"></div>
+        </div>
+        <div class="hyst-labs">
+          <span>3.0V</span>
+          <span class="hl-r">OFF 3.8V</span>
+          <span class="hl-g">ON 4.1V</span>
+          <span>4.2V</span>
+        </div>
+        <div class="hyst-txt" id="hTxt">Waiting for data...</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="card-lbl purple">ESG meter</div>
+        <canvas id="esgC" width="220" height="80" style="display:block;margin:0 auto"></canvas>
+        <div class="esg-big"   id="esgScr">0</div>
+        <div class="esg-grade" id="esgGrd">—</div>
+        <div class="esg-exp">
+          ESG = battery% × 0.55 + relay-active bonus (45 pts).
+          Measures how well you utilise solar energy.
+          80+ = Excellent. Calculated live from Arduino readings.
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Energy Chart -->
+    <div class="card span2">
+      <div class="card-lbl">Energy balance — live chart</div>
+      <canvas id="eCh" style="width:100%" height="120"></canvas>
+      <div class="chart-legend">
+        <div class="cl"><div class="cld" style="background:var(--G)"></div>Produced (W)</div>
+        <div class="cl"><div class="cld" style="background:var(--O)"></div>Consumed (W)</div>
+        <div class="cl"><div class="cld" style="background:var(--B)"></div>Battery %</div>
+      </div>
+    </div>
+
+    <!-- Card 7: Energy Flow + Events -->
+    <div class="card">
+      <div class="card-lbl">Energy flow</div>
+      <div class="flow-row">
+        <div class="fn">
+          <div class="fn-box" style="background:#0d2a4a;border-color:#1565c0">
+            <div class="mini-panel" id="mpanel"></div>
+          </div>
+          <div class="fn-lbl">Solar</div>
+        </div>
+        <div class="f-arr">
+          <div class="f-d"></div><div class="f-d"></div><div class="f-d"></div>
+          <div class="f-tip"></div>
+        </div>
+        <div class="fn">
+          <div class="fn-box" style="background:#1a1200;border-color:#7a4800">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffab40" stroke-width="2">
+              <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
+            </svg>
+          </div>
+          <div class="fn-lbl">TP4056</div>
+        </div>
+        <div class="f-arr">
+          <div class="f-d"></div><div class="f-d"></div><div class="f-d"></div>
+          <div class="f-tip"></div>
+        </div>
+        <div class="fn">
+          <div class="fn-box" style="background:#0a3d20;border-color:#0f6e3a">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2">
+              <rect x="2" y="7" width="18" height="10" rx="2"/>
+              <line x1="22" y1="11" x2="22" y2="13"/>
+            </svg>
+          </div>
+          <div class="fn-lbl">Battery</div>
+        </div>
+        <div class="f-arr" id="loadArr" style="opacity:.15">
+          <div class="f-d"></div><div class="f-d"></div><div class="f-d"></div>
+          <div class="f-tip"></div>
+        </div>
+        <div class="fn">
+          <div class="fn-box" style="background:#1a0a2e;border-color:#4a1a7a">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ce93d8" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+          </div>
+          <div class="fn-lbl" id="ledLbl" style="color:var(--t2)">LED OFF</div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <div class="card-lbl">Relay events</div>
+        <div class="ev-list" id="evList">
+          <div class="ev-empty">No events recorded yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Stats + Weather -->
+    <div class="card span4">
+      <div class="card-lbl">Session statistics</div>
+      <div class="stats4">
+        <div class="chip"><div class="chip-lbl">Energy produced</div><div class="chip-val" id="st1" style="color:var(--G)">0.0000 Wh</div></div>
+        <div class="chip"><div class="chip-lbl">Energy consumed</div><div class="chip-val" id="st2" style="color:var(--O)">0.0000 Wh</div></div>
+        <div class="chip"><div class="chip-lbl">₹ Savings today</div><div class="chip-val" id="st3" style="color:var(--Y)">₹0.0000</div></div>
+        <div class="chip"><div class="chip-lbl">Total readings</div><div class="chip-val" id="st4" style="color:var(--P)">0</div></div>
+      </div>
+
+      <div class="card-lbl" style="margin-top:12px">Weather forecast — Pune</div>
+      <div class="wf-row">
+        <div class="wf-d">
+          <div class="wf-ico" style="background:#1a2238">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#4a5568"/>
+            </svg>
+          </div>
+          <span class="wf-date" id="wd1">—</span>
+          <span class="wf-temp">24°C</span>
+        </div>
+        <div class="wf-d today">
+          <div class="wf-ico" style="background:#ff980025">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="5" fill="#ff9800"/>
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                    stroke="#ff9800" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="wf-date" id="wd2">Today</span>
+          <span class="wf-temp hot">28°C</span>
+        </div>
+        <div class="wf-d">
+          <div class="wf-ico" style="background:#0d1e33">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#4fc3f7" opacity=".4"/>
+              <path d="M12 14v3M9 17l1 2M15 17l-1 2" stroke="#4fc3f7" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="wf-date" id="wd3">—</span>
+          <span class="wf-temp">22°C</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast hide" id="toast"></div>
+
+  <!-- Chart.js library (CDN — no install needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Our dashboard JavaScript -->
+  <script src="dashboard.js"></script>
+
+</body>
+</html>

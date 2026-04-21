@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Utilization Optimizer </title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="mainindex.html">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold: #EF9F27;
+  --gold-dim: #7a4f0f;
+  --green: #1D9E75;
+  --bg: #0a0d0a;
+  --bg2: #111510;
+  --surface: #161b15;
+  --border: rgba(239,159,39,0.15);
+  --border2: rgba(239,159,39,0.30);
+  --text: #e8e4d8;
+  --text2: #8a8a7a;
+  --mono: 'Space Mono', monospace;
+  --display: 'Bebas Neue', cursive;
+  --body: 'DM Sans', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  overflow-x: hidden;
+}
+
+/* ANIMATED GRID BG */
+.grid-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(239,159,39,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239,159,39,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridDrift 20s linear infinite;
+}
+@keyframes gridDrift {
+  0% { background-position: 0 0; }
+  100% { background-position: 48px 48px; }
+}
+
+/* RADIAL GLOW */
+.glow-orb {
+  position: fixed; z-index: 0;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.glow-orb.a {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(239,159,39,0.12) 0%, transparent 70%);
+  top: -100px; left: -100px;
+  animation: orbA 8s ease-in-out infinite alternate;
+}
+.glow-orb.b {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(29,158,117,0.10) 0%, transparent 70%);
+  bottom: -80px; right: -80px;
+  animation: orbB 10s ease-in-out infinite alternate;
+}
+@keyframes orbA { to { transform: translate(60px, 80px); } }
+@keyframes orbB { to { transform: translate(-60px, -60px); } }
+
+/* SCAN LINE */
+.scanline {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,0.08) 3px,
+    rgba(0,0,0,0.08) 4px
+  );
+}
+
+/* MAIN LAYOUT */
+.page {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 24px;
+}
+
+/* TOP CHIP */
+.top-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 0.5px solid var(--border2);
+  padding: 6px 16px; border-radius: 20px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--gold); letter-spacing: 1px;
+  margin-bottom: 32px;
+  background: rgba(239,159,39,0.06);
+  animation: fadeUp 0.6s ease both;
+}
+.chip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* HERO TITLE */
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(56px, 10vw, 110px);
+  line-height: 0.92;
+  text-align: center;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  animation: fadeUp 0.7s ease 0.1s both;
+}
+.hero-title .line1 { display: block; color: var(--text); }
+.hero-title .line2 { display: block; color: var(--gold); }
+.hero-title .line3 { display: block; color: var(--text2); }
+
+.hero-sub {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text2); text-align: center; letter-spacing: 2px;
+  margin-bottom: 48px;
+  text-transform: uppercase;
+  animation: fadeUp 0.7s ease 0.2s both;
+}
+
+/* STATS ROW */
+.stats-row {
+  display: flex; gap: 1px; margin-bottom: 52px;
+  border: 0.5px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  animation: fadeUp 0.7s ease 0.3s both;
+}
+.stat-cell {
+  padding: 16px 28px; background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1; position: relative;
+}
+.stat-cell + .stat-cell { border-left: 0.5px solid var(--border); }
+.stat-num {
+  font-family: var(--display); font-size: 28px; color: var(--gold); letter-spacing: 1px;
+}
+.stat-lbl {
+  font-family: var(--mono); font-size: 9px; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 1px; text-align: center;
+}
+
+/* FEATURE CARDS */
+.features {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; margin-bottom: 52px; width: 100%; max-width: 720px;
+  border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden;
+  animation: fadeUp 0.7s ease 0.4s both;
+}
+@media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+
+.feat-card {
+  background: var(--surface); padding: 22px 20px;
+  position: relative; overflow: hidden;
+  transition: background 0.2s;
+}
+.feat-card:hover { background: #1a2018; }
+.feat-card + .feat-card { border-left: 0.5px solid var(--border); }
+@media (max-width: 560px) { .feat-card + .feat-card { border-left: none; border-top: 0.5px solid var(--border); } }
+
+.feat-icon {
+  font-size: 22px; margin-bottom: 10px; display: block;
+}
+.feat-title {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--gold); letter-spacing: 0.5px; margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.feat-desc {
+  font-size: 12px; color: var(--text2); line-height: 1.6;
+}
+.feat-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: var(--gold); transform: scaleX(0);
+  transition: transform 0.25s ease; transform-origin: left;
+}
+.feat-card:hover::after { transform: scaleX(1); }
+
+/* MAIN CTA */
+.cta-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  animation: fadeUp 0.7s ease 0.5s both;
+}
+
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 14px;
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 16px 40px; border-radius: 4px;
+  background: var(--gold); color: #0a0d0a;
+  border: none; cursor: pointer; text-decoration: none;
+  position: relative; overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.cta-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+.cta-btn:hover::before { transform: translateX(100%); }
+.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(239,159,39,0.35); }
+.cta-btn:active { transform: translateY(0); }
+.cta-arrow { font-size: 18px; transition: transform 0.2s; }
+.cta-btn:hover .cta-arrow { transform: translateX(4px); }
+
+.cta-note {
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  letter-spacing: 0.5px;
+}
+
+/* BOTTOM INFO */
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 32px;
+  border-top: 0.5px solid var(--border);
+  background: rgba(10,13,10,0.85);
+  backdrop-filter: blur(8px);
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.bottom-bar .bb-left { display: flex; align-items: center; gap: 20px; }
+.bb-tag { color: var(--gold); }
+
+/* SOLAR ORBIT SVG animation */
+.orbit-wrap {
+  position: fixed; top: 50%; right: -80px;
+  transform: translateY(-50%);
+  opacity: 0.07; pointer-events: none; z-index: 0;
+}
+.orbit-wrap svg { animation: spinSlow 30s linear infinite; }
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* COUNTER ANIMATION */
+.count-num { display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="glow-orb a"></div>
+<div class="glow-orb b"></div>
+<div class="scanline"></div>
+
+<!-- Decorative orbit -->
+<div class="orbit-wrap">
+  <svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="250" cy="250" r="200" stroke="#EF9F27" stroke-width="1"/>
+    <circle cx="250" cy="250" r="140" stroke="#EF9F27" stroke-width="0.5" stroke-dasharray="6 6"/>
+    <circle cx="250" cy="250" r="80" stroke="#EF9F27" stroke-width="1"/>
+    <circle cx="250" cy="50" r="12" fill="#EF9F27"/>
+    <circle cx="250" cy="170" r="7" fill="#EF9F27" opacity="0.6"/>
+    <line x1="250" y1="250" x2="250" y2="50" stroke="#EF9F27" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="450" cy="250" r="8" fill="#1D9E75"/>
+  </svg>
+</div>
+
+<main class="page">
+
+  <div class="top-chip">
+    <span class="chip-dot"></span>
+    
+  </div>
+
+  <h1 class="hero-title">
+    <span class="line1">SOLAR</span>
+    <span class="line2">UTILIZATION</span>
+    <span class="line3">OPTIMIZER</span>
+  </h1>
+
+  <p class="hero-sub">Design & Development of Efficient Renewable Energy Management</p>
+
+  <div class="stats-row">
+    <div class="stat-cell">
+      <span class="stat-num" data-target="5">0</span>
+      <span class="stat-lbl">Solar Panel<br>Volts</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num" data-target="12">0</span>
+      <span class="stat-lbl">Boost<br>Output V</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num" data-target="10">0</span>
+      <span class="stat-lbl">Components<br>Used</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">∞</span>
+      <span class="stat-lbl">Energy<br>Saved</span>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feat-card">
+      <span class="feat-icon">☀️</span>
+      <div class="feat-title">Real-time Monitoring</div>
+      <div class="feat-desc">Live solar panel & battery voltage via ACS712 + voltage divider on Arduino A0.</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">⚡</span>
+      <div class="feat-title">Smart Load Control</div>
+      <div class="feat-desc">Hysteresis relay logic automatically diverts surplus energy to secondary loads.</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">📊</span>
+      <div class="feat-title">Live Dashboard</div>
+      <div class="feat-desc">Web Serial API connects directly to Arduino. Simulate or monitor live, no app needed.</div>
+    </div>
+  </div>
+
+  <div class="cta-wrap">
+    <a class="cta-btn" href="solar_dashboard.html" target="_blank">
+      Launch Dashboard
+      <span class="cta-arrow">→</span>
+    </a>
+    <span class="cta-note">opens solar_dashboard.html — keep both files in the same folder</span>
+  </div>
+
+</main>
+
+<div class="bottom-bar">
+  <div class="bb-left">
+    <span class="bb-tag">SUO v1.0</span>
+    <span>Arduino UNO · TP4056 · ACS712 · 16×2 LCD I2C · Boost Converter</span>
+  </div>
+  <span>VIT ASEP2 · 2024–25</span>
+</div>
+
+<script>
+// Animate stat counters
+document.querySelectorAll('.stat-num[data-target]').forEach(el => {
+  const target = parseInt(el.dataset.target);
+  let current = 0;
+  const step = Math.max(1, Math.floor(target / 30));
+  const interval = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current;
+    if (current >= target) clearInterval(interval);
+  }, 40);
+});
+</script>
+</body>
+</html>
